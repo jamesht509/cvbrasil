@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { renderToStream } from "@react-pdf/renderer";
+import { renderToBuffer } from "@react-pdf/renderer";
 import { ResumePdfDocument } from "@/lib/pdfTemplate";
 import { UsResumeSchema } from "@/lib/schemas";
 import { formatResumeForPdf } from "@/lib/resumeFormatters";
@@ -29,20 +29,16 @@ export async function POST(request: NextRequest) {
     const resume = validationResult.data;
     const formattedResume = formatResumeForPdf(resume);
 
-    // Generate PDF stream
-    const stream = await renderToStream(
-      React.createElement(ResumePdfDocument, { resume: formattedResume })
+    // Generate PDF buffer using React.createElement
+    const pdfBuffer = await renderToBuffer(
+      React.createElement(ResumePdfDocument, { resume: formattedResume }) as any
     );
 
-    // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of stream) {
-      chunks.push(chunk);
-    }
-    const pdfBuffer = Buffer.concat(chunks);
+    // Convert Buffer to Uint8Array for NextResponse
+    const pdfArray = new Uint8Array(pdfBuffer);
 
     // Return PDF as response
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfArray, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": 'attachment; filename="resume-en.pdf"'

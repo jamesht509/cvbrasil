@@ -1,4 +1,3 @@
-import { createServerClient } from "./supabase";
 import type { UsResume } from "./schemas";
 
 /**
@@ -9,6 +8,7 @@ export async function saveResume(
   userId?: string,
   originalFilename?: string
 ) {
+  const { createServerClient } = await import("./supabase");
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -35,6 +35,7 @@ export async function saveResume(
  * Get a resume by ID
  */
 export async function getResumeById(resumeId: string) {
+  const { createServerClient } = await import("./supabase");
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -55,6 +56,7 @@ export async function getResumeById(resumeId: string) {
  * Get all resumes for a user
  */
 export async function getUserResumes(userId: string) {
+  const { createServerClient } = await import("./supabase");
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -78,6 +80,7 @@ export async function updateResume(
   resumeId: string,
   resumeData: UsResume
 ) {
+  const { createServerClient } = await import("./supabase");
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -102,6 +105,7 @@ export async function updateResume(
  * Delete a resume
  */
 export async function deleteResume(resumeId: string) {
+  const { createServerClient } = await import("./supabase");
   const supabase = createServerClient();
 
   const { error } = await supabase

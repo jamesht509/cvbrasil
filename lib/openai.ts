@@ -1,13 +1,16 @@
 import OpenAI from "openai";
 import { z } from "zod";
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY environment variable is not set");
+// Lazy initialization to avoid build-time errors
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY environment variable is not set");
+  }
+  return new OpenAI({
+    apiKey
+  });
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 /**
  * Calls OpenAI API and enforces JSON-only response with Zod validation
@@ -36,6 +39,7 @@ export async function callOpenAIJson<T>(
 
   while (attempts < maxAttempts) {
     try {
+      const openai = getOpenAIClient();
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini", // Using gpt-4o-mini for cost efficiency, can upgrade to gpt-4o if needed
         messages,

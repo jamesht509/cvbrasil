@@ -4,15 +4,11 @@ import {
   Page,
   Text,
   View,
-  StyleSheet,
-  Font
+  StyleSheet
 } from "@react-pdf/renderer";
 import type { UsResume } from "./schemas";
 
-// Register Helvetica font (built-in)
-Font.register({
-  family: "Helvetica"
-});
+// Helvetica is the default font in React-PDF, no need to register
 
 const styles = StyleSheet.create({
   page: {
