@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+.container-page {
+  @apply max-w-4xl mx-auto px-4 py-10;
+}
+
+
