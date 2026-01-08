@@ -110,6 +110,19 @@ http://localhost:3000
 - `npm run start` - Inicia o servidor de produção
 - `npm run lint` - Executa o linter
 
+## Deploy no Vercel
+
+Para fazer deploy no Vercel:
+
+1. **Conecte seu repositório** no Vercel (https://vercel.com)
+2. **Configure a variável de ambiente:**
+   - No dashboard do Vercel, vá em **Settings → Environment Variables**
+   - Adicione: `OPENAI_API_KEY` com sua chave da OpenAI
+   - Selecione todos os ambientes (Production, Preview, Development)
+3. **Faça o deploy** - o Vercel detectará automaticamente que é um projeto Next.js
+
+📖 **Guia completo:** Veja [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) para instruções detalhadas.
+
 ## Licença
 
 Este projeto é privado.
