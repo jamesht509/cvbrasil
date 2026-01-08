@@ -39,10 +39,14 @@ npm install
 cp .env.example .env
 ```
 
-Edite o arquivo `.env` e adicione sua chave da OpenAI:
-```
-OPENAI_API_KEY=sua_chave_aqui
-```
+Edite o arquivo `.env` e adicione:
+- Sua chave da OpenAI: `OPENAI_API_KEY`
+- Credenciais do Supabase (opcional, se quiser salvar resumes):
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+
+📖 **Configuração do Supabase:** Veja [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) para instruções detalhadas.
 
 ## Como executar
 
@@ -66,8 +70,9 @@ http://localhost:3000
 
 ## Nota de Privacidade
 
-- Os dados do currículo são processados apenas em memória durante a requisição.
-- Nenhum arquivo ou dado é armazenado permanentemente no servidor.
+- Os dados do currículo são processados em memória durante a requisição.
+- **Com Supabase configurado:** Os resumes podem ser salvos no banco de dados para histórico e edição futura.
+- **Sem Supabase:** Nenhum arquivo ou dado é armazenado permanentemente no servidor.
 - Os dados são enviados para a API da OpenAI para processamento, conforme os termos de uso da OpenAI.
 
 ## Tecnologias Utilizadas
@@ -78,6 +83,7 @@ http://localhost:3000
 - shadcn/ui
 - React-PDF (@react-pdf/renderer)
 - OpenAI API
+- Supabase (banco de dados PostgreSQL)
 - Zod (validação de schemas)
 - pdf-parse (extração de texto)
 
@@ -97,6 +103,8 @@ http://localhost:3000
 /lib
   schemas.ts           # Schemas Zod
   openai.ts            # Integração com OpenAI
+  supabase.ts          # Cliente Supabase
+  db-resumes.ts        # Funções de banco de dados
   extractTextFromPdf.ts
   pdfTemplate.tsx      # Template do PDF
   sanitize.ts
