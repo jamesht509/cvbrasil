@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { SegmentedControl } from "../../components/ui/segmented-control";
 import { ResumePreview } from "../../components/ResumePreview";
 import { ResumeEditor } from "../../components/ResumeEditor";
 import { useResume } from "../providers";
@@ -13,6 +14,7 @@ export default function PreviewPage() {
   const { resume, setResume } = useResume();
   const router = useRouter();
   const [downloading, setDownloading] = useState(false);
+  const [pdfStyle, setPdfStyle] = useState<"ats" | "premium">("ats");
 
   if (!resume) {
     return (
@@ -54,7 +56,7 @@ export default function PreviewPage() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ resume })
+        body: JSON.stringify({ resume, style: pdfStyle })
       });
 
       if (!res.ok) {
@@ -65,7 +67,7 @@ export default function PreviewPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "resume-en.pdf";
+      a.download = "resume-us.pdf";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -96,34 +98,98 @@ export default function PreviewPage() {
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/")}
-              className="border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              <span className="material-symbols-outlined mr-2 text-lg">arrow_back</span>
-              Voltar
-            </Button>
-            <Button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              {downloading ? (
-                <>
-                  <span className="material-symbols-outlined mr-2 animate-spin">refresh</span>
-                  Gerando PDF...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined mr-2">download</span>
-                  Baixar PDF
-                </>
-              )}
-            </Button>
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Estilo do PDF
+              </label>
+              <SegmentedControl
+                value={pdfStyle}
+                onChange={(value) => setPdfStyle(value as "ats" | "premium")}
+                options={[
+                  { value: "ats", label: "ATS (Recomendado)" },
+                  { value: "premium", label: "Premium" },
+                ]}
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/")}
+                className="border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <span className="material-symbols-outlined mr-2 text-lg">arrow_back</span>
+                Voltar
+              </Button>
+              <Button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {downloading ? (
+                  <>
+                    <span className="material-symbols-outlined mr-2 animate-spin">refresh</span>
+                    Gerando PDF...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined mr-2">download</span>
+                    Baixar PDF
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* LinkedIn Import Status */}
+        {resume.metadata && (
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary text-xl">link</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                      LinkedIn: Importado
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {resume.metadata.importSources.usedLinkedinPdf && (
+                      <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
+                        PDF
+                      </span>
+                    )}
+                    {resume.metadata.importSources.usedLinkedinAbout && (
+                      <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
+                        About
+                      </span>
+                    )}
+                    {resume.metadata.importSources.linkedinUrlProvided && (
+                      <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
+                        Link
+                      </span>
+                    )}
+                    {!resume.metadata.importSources.usedLinkedinPdf &&
+                      !resume.metadata.importSources.usedLinkedinAbout &&
+                      !resume.metadata.importSources.linkedinUrlProvided && (
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          Nenhum dado do LinkedIn foi usado
+                        </span>
+                      )}
+                  </div>
+                  {resume.metadata.conflictsDetected && resume.metadata.conflictsDetected.length > 0 && (
+                    <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
+                        ⚠️ Encontramos diferenças entre CV e LinkedIn. Priorizamos o CV.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

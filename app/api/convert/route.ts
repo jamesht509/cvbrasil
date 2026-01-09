@@ -13,6 +13,9 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const linkedinUrl = formData.get("linkedinUrl") as string | null;
+    const linkedinAboutText = formData.get("linkedinAboutText") as string | null;
+    const linkedinPdf = formData.get("linkedinPdf") as File | null;
 
     if (!file) {
       return NextResponse.json(
@@ -37,6 +40,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate LinkedIn PDF if provided
+    let linkedinPdfText = "";
+    const importSources = {
+      usedLinkedinPdf: false,
+      usedLinkedinAbout: false,
+      linkedinUrlProvided: false
+    };
+
+    if (linkedinPdf) {
+      if (linkedinPdf.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `PDF do LinkedIn muito grande. Tamanho máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB.` },
+          { status: 400 }
+        );
+      }
+      try {
+        const linkedinArrayBuffer = await linkedinPdf.arrayBuffer();
+        const linkedinBuffer = Buffer.from(linkedinArrayBuffer);
+        linkedinPdfText = await extractTextFromPdf(linkedinBuffer);
+        if (linkedinPdfText.trim().length > 0) {
+          importSources.usedLinkedinPdf = true;
+        } else {
+          console.warn("LinkedIn PDF extraction yielded empty text");
+        }
+      } catch (error) {
+        console.error("LinkedIn PDF extraction error:", error);
+        // Continue without LinkedIn PDF text
+      }
+    }
+
+    if (linkedinAboutText && linkedinAboutText.trim().length > 0) {
+      importSources.usedLinkedinAbout = true;
+    }
+
+    if (linkedinUrl && linkedinUrl.trim().length > 0) {
+      importSources.linkedinUrlProvided = true;
+    }
+
     // Read file to buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -59,7 +100,6 @@ export async function POST(request: NextRequest) {
     // Check if text extraction was successful
     const trimmedText = extractedText.trim();
     console.log(`Texto extraído: ${trimmedText.length} caracteres`);
-    console.log(`Primeiros 500 caracteres: ${trimmedText.substring(0, 500)}`);
     
     if (trimmedText.length < MIN_TEXT_LENGTH) {
       console.error(`Texto muito curto: ${trimmedText.length} caracteres (mínimo: ${MIN_TEXT_LENGTH})`);
@@ -72,12 +112,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Build combined context with LinkedIn data
+    const supplementaryEvidence = [
+      linkedinAboutText?.trim() || "",
+      linkedinPdfText.trim()
+    ].filter(Boolean).join("\n\n");
+
     // Step A: Extract structured data from Portuguese text
     let brazilianData;
     try {
       console.log("Iniciando extração de dados estruturados com OpenAI...");
-      brazilianData = await extractBrazilianResumeData(trimmedText);
-      console.log("Dados brasileiros extraídos com sucesso:", JSON.stringify(brazilianData, null, 2).substring(0, 500));
+      brazilianData = await extractBrazilianResumeData(trimmedText, supplementaryEvidence || undefined);
+      console.log("Dados brasileiros extraídos com sucesso");
     } catch (error: any) {
       console.error("Step A (extraction) error:", error);
       console.error("Erro completo:", {
@@ -118,7 +164,7 @@ export async function POST(request: NextRequest) {
     let usResume;
     try {
       console.log("Iniciando conversão para formato americano...");
-      usResume = await convertToUsResume(brazilianData);
+      usResume = await convertToUsResume(brazilianData, supplementaryEvidence || undefined);
       console.log("Conversão concluída com sucesso!");
     } catch (error: any) {
       console.error("Step B (conversion) error:", error);
@@ -136,7 +182,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ resume: usResume });
+    // Add metadata to resume
+    const resumeWithMetadata = {
+      ...usResume,
+      metadata: {
+        importSources,
+        conflictsDetected: usResume.metadata?.conflictsDetected
+      }
+    };
+
+    return NextResponse.json({ resume: resumeWithMetadata });
   } catch (error) {
     console.error("Unexpected error in /api/convert:", error);
     return NextResponse.json(

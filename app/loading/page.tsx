@@ -34,6 +34,12 @@ export default function LoadingPage() {
       return;
     }
 
+    // Obter dados do LinkedIn se disponíveis
+    const linkedinUrl = sessionStorage.getItem("linkedinUrl") || undefined;
+    const linkedinAboutText = sessionStorage.getItem("linkedinAboutText") || undefined;
+    const linkedinPdf = sessionStorage.getItem("linkedinPdf") || undefined;
+    const linkedinPdfName = sessionStorage.getItem("linkedinPdfName") || undefined;
+
     // Iniciar barra de progresso falsa (animação suave)
     let fakeProgress = 0;
     const targetProgress = 95; // Vai até 95%, os últimos 5% quando realmente terminar
@@ -51,13 +57,20 @@ export default function LoadingPage() {
     }, interval);
 
     // Iniciar conversão
-    startConversion(pendingFile, fileName);
+    startConversion(pendingFile, fileName, linkedinUrl, linkedinAboutText, linkedinPdf, linkedinPdfName);
 
     // Limpar intervalo quando componente desmontar
     return () => clearInterval(fakeProgressInterval);
   }, []);
 
-  async function startConversion(base64String: string, fileName: string) {
+  async function startConversion(
+    base64String: string,
+    fileName: string,
+    linkedinUrl?: string,
+    linkedinAboutText?: string,
+    linkedinPdfBase64?: string,
+    linkedinPdfName?: string
+  ) {
     try {
       // Step 1: Lendo PDF
       updateStep(0, "active", "Processando...");
@@ -80,6 +93,20 @@ export default function LoadingPage() {
       const formData = new FormData();
       formData.append("file", file);
 
+      // Adicionar dados do LinkedIn se disponíveis
+      if (linkedinUrl) {
+        formData.append("linkedinUrl", linkedinUrl);
+      }
+      if (linkedinAboutText) {
+        formData.append("linkedinAboutText", linkedinAboutText);
+      }
+      if (linkedinPdfBase64 && linkedinPdfName) {
+        const linkedinResponse = await fetch(linkedinPdfBase64);
+        const linkedinBlob = await linkedinResponse.blob();
+        const linkedinFile = new File([linkedinBlob], linkedinPdfName, { type: linkedinBlob.type });
+        formData.append("linkedinPdf", linkedinFile);
+      }
+
       // Step 2: Completo
       updateStep(1, "completed", "Concluído");
 
@@ -98,6 +125,10 @@ export default function LoadingPage() {
         sessionStorage.removeItem("pendingFile");
         sessionStorage.removeItem("pendingFileName");
         sessionStorage.removeItem("pendingFileType");
+        sessionStorage.removeItem("linkedinUrl");
+        sessionStorage.removeItem("linkedinAboutText");
+        sessionStorage.removeItem("linkedinPdf");
+        sessionStorage.removeItem("linkedinPdfName");
         
         router.push(
           `/error?code=ERR_CONV_${Date.now()}&message=${encodeURIComponent(
@@ -111,6 +142,10 @@ export default function LoadingPage() {
         sessionStorage.removeItem("pendingFile");
         sessionStorage.removeItem("pendingFileName");
         sessionStorage.removeItem("pendingFileType");
+        sessionStorage.removeItem("linkedinUrl");
+        sessionStorage.removeItem("linkedinAboutText");
+        sessionStorage.removeItem("linkedinPdf");
+        sessionStorage.removeItem("linkedinPdfName");
         
         router.push(
           `/error?code=ERR_INVALID&message=${encodeURIComponent("Resposta inválida do servidor.")}`
@@ -211,7 +246,7 @@ export default function LoadingPage() {
                 <p className="text-[#0d121b] dark:text-white text-sm font-medium leading-normal">
                   Progresso da conversão
                 </p>
-                <p className="text-primary text-sm font-bold leading-normal">{Math.min(progress, 100)}%</p>
+                <p className="text-primary text-sm font-bold leading-normal">{Math.min(progress, 100).toFixed(0)}%</p>
               </div>
               <div className="rounded-full bg-[#cfd7e7] dark:bg-[#2d3748] h-2 w-full overflow-hidden">
                 <div

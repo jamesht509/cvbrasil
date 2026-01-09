@@ -100,7 +100,16 @@ export const UsResumeSchema = z.object({
     )
     .optional(),
   languages: z.array(z.string()).optional(),
-  additional: z.string().optional()
+  additional: z.string().optional(),
+  // Metadata (UI-only, not included in PDF)
+  metadata: z.object({
+    importSources: z.object({
+      usedLinkedinPdf: z.boolean(),
+      usedLinkedinAbout: z.boolean(),
+      linkedinUrlProvided: z.boolean()
+    }),
+    conflictsDetected: z.array(z.string()).optional()
+  }).optional()
 });
 
 export type UsResume = z.infer<typeof UsResumeSchema>;

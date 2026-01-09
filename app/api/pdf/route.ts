@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { ResumePdfDocument } from "@/lib/pdfTemplate";
+import { ResumePdfDocument } from "@/lib/pdfTemplates";
 import { UsResumeSchema } from "@/lib/schemas";
-import { formatResumeForPdf } from "@/lib/resumeFormatters";
+import { normalizeResume, compactResumeToOnePageHeuristics } from "@/lib/resumeNormalizers";
+import { z } from "zod";
 import React from "react";
+
+const PdfRequestSchema = z.object({
+  resume: UsResumeSchema,
+  style: z.enum(["ats", "premium"]).default("ats"),
+});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const resumeData = body.resume;
 
-    if (!resumeData) {
-      return NextResponse.json(
-        { error: "Dados do resume não fornecidos." },
-        { status: 400 }
-      );
-    }
-
-    // Validate with Zod schema
-    const validationResult = UsResumeSchema.safeParse(resumeData);
+    // Validate request body
+    const validationResult = PdfRequestSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
         { error: "Dados do resume inválidos.", details: validationResult.error },
@@ -26,12 +24,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const resume = validationResult.data;
-    const formattedResume = formatResumeForPdf(resume);
+    const { resume: resumeData, style } = validationResult.data;
+
+    // Strip metadata (UI-only, not included in PDF)
+    const { metadata, ...resumeWithoutMetadata } = resumeData;
+
+    // Normalize and compact resume
+    const normalized = normalizeResume(resumeWithoutMetadata);
+    const compacted = compactResumeToOnePageHeuristics(normalized);
 
     // Generate PDF buffer using React.createElement
     const pdfBuffer = await renderToBuffer(
-      React.createElement(ResumePdfDocument, { resume: formattedResume }) as any
+      React.createElement(ResumePdfDocument, { resume: compacted, style }) as any
     );
 
     // Convert Buffer to Uint8Array for NextResponse
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse(pdfArray, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="resume-en.pdf"'
+        "Content-Disposition": 'attachment; filename="resume-us.pdf"'
       }
     });
   } catch (error) {

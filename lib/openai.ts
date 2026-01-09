@@ -104,7 +104,8 @@ export async function callOpenAIJson<T>(
  * Step A: Extract structured data from Portuguese resume text
  */
 export async function extractBrazilianResumeData(
-  rawText: string
+  rawText: string,
+  supplementaryEvidence?: string
 ): Promise<z.infer<typeof import("./schemas").BrazilResumeExtractedSchema>> {
   const { BrazilResumeExtractedSchema } = await import("./schemas");
 
@@ -118,10 +119,18 @@ export async function extractBrazilianResumeData(
     throw new Error("Texto muito curto para processar. O PDF precisa conter mais conteúdo.");
   }
 
+  const hasSupplementaryEvidence = supplementaryEvidence && supplementaryEvidence.trim().length > 0;
+  
   const prompt = `Extract structured resume data from the following Portuguese resume text. 
 Be robust to messy formatting, missing sections, and various layouts.
 If a field is not found, use empty string or empty array as appropriate.
 Do your best to extract all available information.
+${hasSupplementaryEvidence ? `
+IMPORTANT: Additional LinkedIn information is provided below as supplementary evidence.
+- Use this evidence ONLY to clarify or confirm ambiguous items (job titles, dates, tools, responsibilities) that are consistent with the CV.
+- NEVER invent facts not present in the CV or supplementary evidence.
+- If LinkedIn data conflicts with CV, prefer CV data.
+` : ""}
 
 Return a JSON object with this structure:
 {
@@ -177,6 +186,11 @@ The "nome" field in dadosPessoais is required - try to extract it even if it's n
 
 Resume text (${cleanedText.length} characters):
 ${cleanedText.substring(0, 15000)}${cleanedText.length > 15000 ? "\n\n[... truncated ...]" : ""}
+${hasSupplementaryEvidence ? `
+
+--- SUPPLEMENTARY EVIDENCE (LinkedIn data - use only to clarify/confirm CV data) ---
+${supplementaryEvidence.substring(0, 5000)}${supplementaryEvidence.length > 5000 ? "\n\n[... truncated ...]" : ""}
+` : ""}
 
 Respond ONLY with valid JSON. No markdown code blocks. No commentary. Just pure JSON.`;
 
@@ -257,41 +271,64 @@ Return ONLY valid JSON, no markdown.`;
  * Step B: Convert Brazilian resume JSON to US-style resume JSON in English
  */
 export async function convertToUsResume(
-  brazilianData: z.infer<typeof import("./schemas").BrazilResumeExtractedSchema>
+  brazilianData: z.infer<typeof import("./schemas").BrazilResumeExtractedSchema>,
+  supplementaryEvidence?: string
 ): Promise<z.infer<typeof import("./schemas").UsResumeSchema>> {
   const { UsResumeSchema } = await import("./schemas");
 
-  const prompt = `Convert the following Brazilian resume data to a US-style resume in formal business English.
+  const hasSupplementaryEvidence = supplementaryEvidence && supplementaryEvidence.trim().length > 0;
+  const conflictsDetected: string[] = [];
 
-IMPORTANT RULES:
-1. Remove Brazilian-only information: CPF, RG, photo, age, marital status (unless absolutely necessary)
-2. Translate education terms:
-   - "Ensino Médio" → "High School Diploma"
-   - "Tecnólogo" → "Associate Degree" or "Technology Degree"
-   - "Graduação" → "Bachelor's Degree"
-   - "Pós-graduação" → "Graduate Degree" or "Master's Degree"
-   - "Doutorado" → "Ph.D."
-3. Convert employment types:
-   - "MEI" or "PJ" → "Independent Contractor" or "Self-Employed"
-   - "CLT" → "Full-time Employee" (or omit if not relevant)
-4. Use formal US business English with action verbs
-5. Quantify achievements when possible (numbers, percentages, etc.)
-6. Format dates as "Jan 2022" or "Present"
-7. Use US-style location format: "City, State" (e.g., "São Paulo, SP" → "São Paulo, SP" or translate state if known)
+  const prompt = `Convert the following Brazilian resume data to a US-style resume in formal business English.
+${hasSupplementaryEvidence ? `
+IMPORTANT: LinkedIn supplementary evidence is provided below.
+- You may use it to improve Summary wording and bullet points with better action verbs and outcomes.
+- You may NOT add new employers, roles, degrees, or certifications not present in the CV or supplementary evidence.
+- If LinkedIn data conflicts with CV, prefer CV data and note the conflict internally (do not include in output).
+` : ""}
+
+CRITICAL REQUIREMENTS:
+1. Output STRICT JSON only. No markdown code blocks, no commentary, no explanations.
+2. Use formal US business English throughout.
+3. ATS-friendly: no emojis, no fancy symbols, no tables, plain text only.
+4. Remove Brazilian-only sensitive fields: CPF, RG, photo, age, marital status.
+5. Target 1-page resume length:
+   - Summary: 2-3 lines max (approximately 350-450 characters)
+   - Skills: 12-18 items (prioritize most relevant)
+   - Experience bullets: 3-5 per job (prefer 3-4, allow 5 for most recent role)
+6. Bullet point style:
+   - Start with action verb + outcome
+   - Add numbers/metrics ONLY if present in source or clearly implied
+   - Do NOT invent metrics
+   - Keep bullets concise (ideally 1 line, sometimes 2 lines max)
+   - Focus on impact and accomplishments, not just responsibilities
+
+TRANSLATION GUIDELINES:
+- Education terms:
+  - "Ensino Médio" → "High School Diploma"
+  - "Tecnólogo" → "Associate Degree" or "Technology Degree"
+  - "Graduação" → "Bachelor's Degree"
+  - "Pós-graduação" → "Graduate Degree" or "Master's Degree"
+  - "Doutorado" → "Ph.D."
+- Employment types:
+  - "MEI" or "PJ" → "Independent Contractor" or "Self-Employed"
+  - "CLT" → "Full-time Employee" (or omit if not relevant)
+- Dates: Format as "Mon YYYY" (e.g., "Jan 2022", "Present")
+- Locations: Use "City, State" format (e.g., "São Paulo, SP")
 
 Return JSON with this exact structure:
 {
   "contact": {
     "fullName": "Full name in English",
-    "headline": "Professional headline (optional)",
+    "headline": "Professional headline (optional, keep brief)",
     "location": "City, State",
     "phone": "Phone number",
     "email": "Email",
     "linkedin": "LinkedIn URL if available",
     "portfolio": "Portfolio URL if available"
   },
-  "summary": "Professional summary in formal business English, 2-4 sentences",
-  "skills": ["skill1", "skill2", ...],
+  "summary": "Professional summary: 2-3 sentences max, 350-450 characters. Focus on key strengths and value proposition.",
+  "skills": ["skill1", "skill2", ...] (12-18 items, prioritize most relevant),
   "experience": [
     {
       "company": "Company name",
@@ -300,9 +337,9 @@ Return JSON with this exact structure:
       "startDate": "Jan 2022",
       "endDate": "Present" or "Jan 2024",
       "bullets": [
-        "Action verb bullet point with quantified achievements",
-        "Another achievement or responsibility",
-        ...
+        "Action verb + outcome/impact (with metrics if available in source)",
+        "Another accomplishment-focused bullet",
+        "3-5 bullets per job, prefer 3-4"
       ]
     }
   ],
@@ -310,7 +347,7 @@ Return JSON with this exact structure:
     {
       "school": "School/University name",
       "location": "City, State",
-      "degree": "Degree name in English (e.g., Bachelor's Degree, High School Diploma)",
+      "degree": "Degree name in English",
       "field": "Field of study if applicable",
       "endDate": "Jan 2024" (optional)
     }
@@ -324,14 +361,74 @@ Return JSON with this exact structure:
     }
   ] (optional),
   "languages": ["Language: Proficiency level", ...] (optional),
-  "additional": "Any additional relevant information" (optional)
+  "additional": "Any additional relevant information" (optional, keep brief)
 }
 
 Brazilian resume data:
 ${JSON.stringify(brazilianData, null, 2)}
+${hasSupplementaryEvidence ? `
+
+--- SUPPLEMENTARY EVIDENCE (LinkedIn - use to improve Summary and bullets, but do not add new facts) ---
+${supplementaryEvidence.substring(0, 5000)}${supplementaryEvidence.length > 5000 ? "\n\n[... truncated ...]" : ""}
+` : ""}
 
 Respond ONLY with valid JSON. No markdown. No commentary.`;
 
-  return callOpenAIJson(prompt, UsResumeSchema);
+  const result = await callOpenAIJson(prompt, UsResumeSchema);
+  
+  // Check if content is too long and needs compaction
+  const summaryLength = result.summary.length;
+  const totalBullets = result.experience.reduce((sum, exp) => sum + exp.bullets.length, 0);
+  const skillsCount = result.skills.length;
+  
+  const needsCompaction = 
+    summaryLength > 500 ||
+    totalBullets > 20 ||
+    skillsCount > 20;
+  
+  if (needsCompaction) {
+    console.log("Resume content too long, applying compact pass...");
+    return await compactResumeContent(result);
+  }
+  
+  return result;
+}
+
+/**
+ * Compact pass: Rewrites summary and bullets to shorten by ~25% while preserving meaning
+ */
+async function compactResumeContent(
+  resume: z.infer<typeof import("./schemas").UsResumeSchema>
+): Promise<z.infer<typeof import("./schemas").UsResumeSchema>> {
+  const { UsResumeSchema } = await import("./schemas");
+  
+  const prompt = `You are rewriting a US resume to be more concise while preserving all key information and impact.
+
+TARGET: Reduce length by approximately 25% while maintaining meaning and impact.
+
+RULES:
+1. Summary: Reduce to 2-3 lines (350-450 characters max). Keep only the most impactful statements.
+2. Bullets: Shorten each bullet by ~25% while keeping:
+   - Action verb + outcome
+   - Key metrics (if present)
+   - Impact/result
+3. Keep all jobs, skills, education, certifications - only shorten text content.
+4. Maintain formal US business English.
+5. Do NOT remove important information, only make it more concise.
+
+Current resume:
+${JSON.stringify(resume, null, 2)}
+
+Return the same JSON structure with shortened summary and bullets. Keep all other fields unchanged.
+
+Respond ONLY with valid JSON. No markdown. No commentary.`;
+
+  try {
+    return await callOpenAIJson(prompt, UsResumeSchema);
+  } catch (error) {
+    console.error("Compact pass failed, returning original:", error);
+    // If compaction fails, return original (will be handled by normalizers)
+    return resume;
+  }
 }
 
