@@ -62,8 +62,10 @@ export async function callOpenAIJson<T>(
       }
 
       const parsed = JSON.parse(jsonText);
+      // Parse com defaults aplicados
       const validated = schema.parse(parsed);
-      return validated;
+      // Garantir que os defaults sejam aplicados explicitamente
+      return validated as T;
     } catch (error: any) {
       attempts++;
       console.error(`Tentativa ${attempts} falhou:`, error);
@@ -179,7 +181,33 @@ ${cleanedText.substring(0, 15000)}${cleanedText.length > 15000 ? "\n\n[... trunc
 Respond ONLY with valid JSON. No markdown code blocks. No commentary. Just pure JSON.`;
 
   try {
-    return await callOpenAIJson(prompt, BrazilResumeExtractedSchema);
+    const result = await callOpenAIJson(prompt, BrazilResumeExtractedSchema);
+    // Garantir que os defaults sejam aplicados explicitamente
+    return {
+      ...result,
+      resumoProfissional: result.resumoProfissional ?? "",
+      competencias: result.competencias ?? [],
+      experiencias: (result.experiencias ?? []).map(exp => ({
+        ...exp,
+        empresa: exp.empresa ?? "",
+        cargo: exp.cargo ?? "",
+        responsabilidades: exp.responsabilidades ?? [],
+        resultados: exp.resultados ?? []
+      })),
+      formacao: (result.formacao ?? []).map(f => ({
+        ...f,
+        instituicao: f.instituicao ?? ""
+      })),
+      certificacoes: result.certificacoes ?? [],
+      projetos: (result.projetos ?? []).map(p => ({
+        ...p,
+        nome: p.nome ?? "",
+        descricao: p.descricao ?? "",
+        tecnologias: p.tecnologias ?? []
+      })),
+      idiomas: result.idiomas ?? [],
+      informacoesAdicionais: result.informacoesAdicionais ?? ""
+    } as z.infer<typeof BrazilResumeExtractedSchema>;
   } catch (error: any) {
     console.error("Error in extractBrazilianResumeData:", error);
     
@@ -204,7 +232,18 @@ Text: ${cleanedText.substring(0, 8000)}
 Return ONLY valid JSON, no markdown.`;
       
       try {
-        return await callOpenAIJson(simplifiedPrompt, BrazilResumeExtractedSchema);
+        const result = await callOpenAIJson(simplifiedPrompt, BrazilResumeExtractedSchema);
+        return {
+          ...result,
+          resumoProfissional: result.resumoProfissional ?? "",
+          competencias: result.competencias ?? [],
+          experiencias: result.experiencias ?? [],
+          formacao: result.formacao ?? [],
+          certificacoes: result.certificacoes ?? [],
+          projetos: result.projetos ?? [],
+          idiomas: result.idiomas ?? [],
+          informacoesAdicionais: result.informacoesAdicionais ?? ""
+        } as z.infer<typeof BrazilResumeExtractedSchema>;
       } catch (retryError) {
         throw new Error(`Failed to extract resume data: ${error.message}. Original error: ${retryError}`);
       }
