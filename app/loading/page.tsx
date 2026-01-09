@@ -148,6 +148,10 @@ export default function LoadingPage() {
 
   function handleCancel() {
     if (confirm("Tem certeza que deseja cancelar a conversão?")) {
+      // Limpar sessionStorage
+      sessionStorage.removeItem("pendingFile");
+      sessionStorage.removeItem("pendingFileName");
+      sessionStorage.removeItem("pendingFileType");
       router.push("/");
     }
   }
