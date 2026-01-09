@@ -35,4 +35,19 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* V2 Custom Classes */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-effect {
+  box-shadow: 0 0 40px -10px rgba(75, 43, 238, 0.3);
+}
+
+.bg-gradient-radial {
+  background: radial-gradient(circle at center, #1e293b 0%, #101622 100%);
+}
+
 

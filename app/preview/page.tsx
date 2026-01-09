@@ -108,7 +108,7 @@ export default function PreviewPage() {
                 onChange={(value) => setPdfStyle(value as "ats" | "premium")}
                 options={[
                   { value: "ats", label: "ATS (Recomendado)" },
-                  { value: "premium", label: "Premium" },
+                  { value: "premium", label: "Premium (Mais bonito)" },
                 ]}
               />
             </div>

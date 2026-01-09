@@ -14,18 +14,26 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-10">
-          <a className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+          <Link href="/como-funciona" className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
             Como funciona
-          </a>
-          <a className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+          </Link>
+          <Link href="/privacidade" className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
             Privacidade
-          </a>
-          <a className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+          </Link>
+          <Link href="/contato" className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
             Contato
-          </a>
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
+          {process.env.NEXT_PUBLIC_UI_V2 === "1" && (
+            <Link
+              href="/v2"
+              className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+            >
+              V2 Preview
+            </Link>
+          )}
           <button className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-primary/20">
             Entrar
           </button>

@@ -31,6 +31,7 @@ const TOKENS = {
     black: "#000000",
     gray: "#666666",
     accent: "#4A5568", // Muted blue-gray for premium template
+    primary: "#135bec", // Primary blue for premium template
   },
   lineHeight: {
     body: 1.25,
@@ -51,7 +52,13 @@ const atsStyles = StyleSheet.create({
   name: {
     fontSize: TOKENS.fonts.name,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  headline: {
+    fontSize: TOKENS.fonts.body,
+    color: TOKENS.colors.gray,
+    marginBottom: 6,
+    fontStyle: "italic",
   },
   contact: {
     fontSize: TOKENS.fonts.small,
@@ -66,15 +73,22 @@ const atsStyles = StyleSheet.create({
   section: {
     marginBottom: TOKENS.spacing.betweenSections,
   },
+  sectionCompact: {
+    marginBottom: 8, // Reduced spacing for compact sections
+  },
   sectionTitle: {
     fontSize: TOKENS.fonts.sectionTitle,
     fontWeight: "bold",
     textTransform: "uppercase",
     marginBottom: 4,
     letterSpacing: 0.5,
+    color: TOKENS.colors.black,
   },
   sectionTitleContainer: {
     minPresenceAhead: 120, // Prevent orphaned section headers
+  },
+  sectionTitleContainerCompact: {
+    minPresenceAhead: 60, // Lower threshold for small sections
   },
   summary: {
     fontSize: TOKENS.fonts.body,
@@ -205,7 +219,7 @@ const premiumStyles = StyleSheet.create({
   ...atsStyles,
   accentLine: {
     height: 2,
-    backgroundColor: TOKENS.colors.accent,
+    backgroundColor: TOKENS.colors.primary,
     marginBottom: 8,
     marginLeft: -TOKENS.page.margin,
     marginRight: -TOKENS.page.margin,
@@ -214,11 +228,22 @@ const premiumStyles = StyleSheet.create({
   sectionTitle: {
     ...atsStyles.sectionTitle,
     letterSpacing: 1,
+    color: TOKENS.colors.primary,
   },
   sectionTitleUnderline: {
     height: 0.5,
-    backgroundColor: TOKENS.colors.accent,
+    backgroundColor: TOKENS.colors.primary,
     marginTop: 2,
+    marginBottom: 4,
+  },
+  skillPill: {
+    fontSize: TOKENS.fonts.body,
+    backgroundColor: "#E3F2FD",
+    color: TOKENS.colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginRight: 6,
     marginBottom: 4,
   },
 });
@@ -232,15 +257,17 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
   const styles = style === "premium" ? premiumStyles : atsStyles;
   const isPremium = style === "premium";
 
-  const renderContactLine = () => {
-    const parts: string[] = [];
-    if (resume.contact.location) parts.push(resume.contact.location);
-    if (resume.contact.phone) parts.push(resume.contact.phone);
-    if (resume.contact.email) parts.push(resume.contact.email);
-    if (resume.contact.linkedin) parts.push("LinkedIn");
-    if (resume.contact.portfolio) parts.push("Portfolio");
-    return parts.join(" | ");
+  const renderContactItems = () => {
+    const items: Array<{ text: string; key: string }> = [];
+    if (resume.contact.location) items.push({ text: resume.contact.location, key: "location" });
+    if (resume.contact.phone) items.push({ text: resume.contact.phone, key: "phone" });
+    if (resume.contact.email) items.push({ text: resume.contact.email, key: "email" });
+    if (resume.contact.linkedin) items.push({ text: resume.contact.linkedin, key: "linkedin" });
+    if (resume.contact.portfolio) items.push({ text: resume.contact.portfolio, key: "portfolio" });
+    return items;
   };
+
+  const contactItems = renderContactItems();
 
   return (
     <Document>
@@ -251,7 +278,19 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.name}>{resume.contact.fullName}</Text>
-          <Text style={styles.contact}>{renderContactLine()}</Text>
+          {resume.contact.headline && (
+            <Text style={styles.headline}>{resume.contact.headline}</Text>
+          )}
+          {contactItems.length > 0 && (
+            <View style={styles.contact}>
+              {contactItems.map((item, idx) => (
+                <Text key={item.key} style={styles.contactItem}>
+                  {item.text}
+                  {idx < contactItems.length - 1 ? " | " : ""}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Professional Summary */}
@@ -273,12 +312,21 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
               {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             <View style={styles.skillsList}>
-              {resume.skills.map((skill, idx) => (
-                <Text key={idx} style={styles.skill}>
-                  {skill}
-                  {idx < resume.skills.length - 1 ? ", " : ""}
-                </Text>
-              ))}
+              {resume.skills.map((skill, idx) => {
+                if (isPremium) {
+                  return (
+                    <View key={idx} style={premiumStyles.skillPill}>
+                      <Text>{skill}</Text>
+                    </View>
+                  );
+                }
+                return (
+                  <Text key={idx} style={styles.skill}>
+                    {skill}
+                    {idx < resume.skills.length - 1 ? ", " : ""}
+                  </Text>
+                );
+              })}
             </View>
           </View>
         )}
@@ -347,8 +395,8 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
 
         {/* Certifications */}
         {resume.certifications && resume.certifications.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionTitleContainer}>
+          <View style={styles.sectionCompact} wrap={false}>
+            <View style={styles.sectionTitleContainerCompact}>
               <Text style={styles.sectionTitle}>CERTIFICATIONS</Text>
               {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
@@ -387,8 +435,8 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
 
         {/* Languages */}
         {resume.languages && resume.languages.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionTitleContainer}>
+          <View style={styles.sectionCompact} wrap={false}>
+            <View style={styles.sectionTitleContainerCompact}>
               <Text style={styles.sectionTitle}>LANGUAGES</Text>
               {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>

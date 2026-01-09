@@ -10,13 +10,13 @@ export function Footer() {
         </div>
 
         <div className="flex items-center gap-8">
-          <a className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors uppercase tracking-widest" href="#">
+          <a className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors uppercase tracking-widest" href="/privacidade">
             Termos
           </a>
-          <a className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors uppercase tracking-widest" href="#">
+          <a className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors uppercase tracking-widest" href="/privacidade">
             Privacidade
           </a>
-          <a className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors uppercase tracking-widest" href="#">
+          <a className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors uppercase tracking-widest" href="/faq">
             FAQ
           </a>
         </div>

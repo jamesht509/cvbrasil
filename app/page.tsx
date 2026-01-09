@@ -9,14 +9,12 @@ import { Textarea } from "../components/ui/textarea";
 
 export default function HomePage() {
   const [file, setFile] = useState<File | null>(null);
-  const [linkedinPdf, setLinkedinPdf] = useState<File | null>(null);
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [linkedinAboutText, setLinkedinAboutText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const linkedinPdfInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { setResume } = useResume();
 
@@ -46,28 +44,6 @@ export default function HomePage() {
     setFile(selectedFile);
   }
 
-  function handleLinkedinPdfSelect(selectedFile: File | null) {
-    setError(null);
-    if (!selectedFile) {
-      setLinkedinPdf(null);
-      return;
-    }
-    
-    if (selectedFile.type !== "application/pdf" && !selectedFile.name.toLowerCase().endsWith(".pdf")) {
-      setError("O PDF do LinkedIn deve ser um arquivo PDF.");
-      setLinkedinPdf(null);
-      return;
-    }
-    
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (selectedFile.size > maxSize) {
-      setError("O PDF do LinkedIn deve ter no máximo 10 MB.");
-      setLinkedinPdf(null);
-      return;
-    }
-    
-    setLinkedinPdf(selectedFile);
-  }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -108,18 +84,7 @@ export default function HomePage() {
       if (linkedinAboutText.trim()) {
         sessionStorage.setItem("linkedinAboutText", linkedinAboutText.trim());
       }
-      if (linkedinPdf) {
-        const linkedinReader = new FileReader();
-        linkedinReader.onloadend = () => {
-          const linkedinBase64 = linkedinReader.result as string;
-          sessionStorage.setItem("linkedinPdf", linkedinBase64);
-          sessionStorage.setItem("linkedinPdfName", linkedinPdf.name);
-          router.push("/loading");
-        };
-        linkedinReader.readAsDataURL(linkedinPdf);
-      } else {
-        router.push("/loading");
-      }
+      router.push("/loading");
     };
     reader.readAsDataURL(file);
   }
@@ -241,39 +206,6 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* LinkedIn PDF */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    PDF do LinkedIn (opcional)
-                  </label>
-                  <input
-                    ref={linkedinPdfInputRef}
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const selectedFile = e.target.files?.[0] || null;
-                      handleLinkedinPdfSelect(selectedFile);
-                    }}
-                  />
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => linkedinPdfInputRef.current?.click()}
-                      className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      {linkedinPdf ? "Trocar PDF" : "Selecionar PDF"}
-                    </button>
-                    {linkedinPdf && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {linkedinPdf.name} ({(linkedinPdf.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    No LinkedIn (desktop), use "Save to PDF" no seu perfil e envie aqui.
-                  </p>
-                </div>
               </div>
             </div>
 

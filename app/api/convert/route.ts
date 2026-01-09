@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File | null;
     const linkedinUrl = formData.get("linkedinUrl") as string | null;
     const linkedinAboutText = formData.get("linkedinAboutText") as string | null;
-    const linkedinPdf = formData.get("linkedinPdf") as File | null;
 
     if (!file) {
       return NextResponse.json(
@@ -40,35 +39,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate LinkedIn PDF if provided
-    let linkedinPdfText = "";
+    // Track LinkedIn import sources
     const importSources = {
       usedLinkedinPdf: false,
       usedLinkedinAbout: false,
       linkedinUrlProvided: false
     };
-
-    if (linkedinPdf) {
-      if (linkedinPdf.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: `PDF do LinkedIn muito grande. Tamanho máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB.` },
-          { status: 400 }
-        );
-      }
-      try {
-        const linkedinArrayBuffer = await linkedinPdf.arrayBuffer();
-        const linkedinBuffer = Buffer.from(linkedinArrayBuffer);
-        linkedinPdfText = await extractTextFromPdf(linkedinBuffer);
-        if (linkedinPdfText.trim().length > 0) {
-          importSources.usedLinkedinPdf = true;
-        } else {
-          console.warn("LinkedIn PDF extraction yielded empty text");
-        }
-      } catch (error) {
-        console.error("LinkedIn PDF extraction error:", error);
-        // Continue without LinkedIn PDF text
-      }
-    }
 
     if (linkedinAboutText && linkedinAboutText.trim().length > 0) {
       importSources.usedLinkedinAbout = true;
@@ -113,10 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build combined context with LinkedIn data
-    const supplementaryEvidence = [
-      linkedinAboutText?.trim() || "",
-      linkedinPdfText.trim()
-    ].filter(Boolean).join("\n\n");
+    const supplementaryEvidence = linkedinAboutText?.trim() || "";
 
     // Step A: Extract structured data from Portuguese text
     let brazilianData;

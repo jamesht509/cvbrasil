@@ -37,8 +37,6 @@ export default function LoadingPage() {
     // Obter dados do LinkedIn se disponíveis
     const linkedinUrl = sessionStorage.getItem("linkedinUrl") || undefined;
     const linkedinAboutText = sessionStorage.getItem("linkedinAboutText") || undefined;
-    const linkedinPdf = sessionStorage.getItem("linkedinPdf") || undefined;
-    const linkedinPdfName = sessionStorage.getItem("linkedinPdfName") || undefined;
 
     // Iniciar barra de progresso falsa (animação suave)
     let fakeProgress = 0;
@@ -57,7 +55,7 @@ export default function LoadingPage() {
     }, interval);
 
     // Iniciar conversão
-    startConversion(pendingFile, fileName, linkedinUrl, linkedinAboutText, linkedinPdf, linkedinPdfName);
+    startConversion(pendingFile, fileName, linkedinUrl, linkedinAboutText);
 
     // Limpar intervalo quando componente desmontar
     return () => clearInterval(fakeProgressInterval);
@@ -67,9 +65,7 @@ export default function LoadingPage() {
     base64String: string,
     fileName: string,
     linkedinUrl?: string,
-    linkedinAboutText?: string,
-    linkedinPdfBase64?: string,
-    linkedinPdfName?: string
+    linkedinAboutText?: string
   ) {
     try {
       // Step 1: Lendo PDF
@@ -100,12 +96,6 @@ export default function LoadingPage() {
       if (linkedinAboutText) {
         formData.append("linkedinAboutText", linkedinAboutText);
       }
-      if (linkedinPdfBase64 && linkedinPdfName) {
-        const linkedinResponse = await fetch(linkedinPdfBase64);
-        const linkedinBlob = await linkedinResponse.blob();
-        const linkedinFile = new File([linkedinBlob], linkedinPdfName, { type: linkedinBlob.type });
-        formData.append("linkedinPdf", linkedinFile);
-      }
 
       // Step 2: Completo
       updateStep(1, "completed", "Concluído");
@@ -125,10 +115,8 @@ export default function LoadingPage() {
         sessionStorage.removeItem("pendingFile");
         sessionStorage.removeItem("pendingFileName");
         sessionStorage.removeItem("pendingFileType");
-        sessionStorage.removeItem("linkedinUrl");
-        sessionStorage.removeItem("linkedinAboutText");
-        sessionStorage.removeItem("linkedinPdf");
-        sessionStorage.removeItem("linkedinPdfName");
+      sessionStorage.removeItem("linkedinUrl");
+      sessionStorage.removeItem("linkedinAboutText");
         
         router.push(
           `/error?code=ERR_CONV_${Date.now()}&message=${encodeURIComponent(
@@ -142,10 +130,8 @@ export default function LoadingPage() {
         sessionStorage.removeItem("pendingFile");
         sessionStorage.removeItem("pendingFileName");
         sessionStorage.removeItem("pendingFileType");
-        sessionStorage.removeItem("linkedinUrl");
-        sessionStorage.removeItem("linkedinAboutText");
-        sessionStorage.removeItem("linkedinPdf");
-        sessionStorage.removeItem("linkedinPdfName");
+      sessionStorage.removeItem("linkedinUrl");
+      sessionStorage.removeItem("linkedinAboutText");
         
         router.push(
           `/error?code=ERR_INVALID&message=${encodeURIComponent("Resposta inválida do servidor.")}`
