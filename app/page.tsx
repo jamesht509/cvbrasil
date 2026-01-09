@@ -64,41 +64,18 @@ export default function HomePage() {
     console.log("Iniciando conversão do arquivo:", file.name, file.size, file.type);
     setLoading(true);
     
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      console.log("Enviando arquivo para API...");
-      const res = await fetch("/api/convert", {
-        method: "POST",
-        body: formData
-      });
-
-      console.log("Resposta da API:", res.status, res.statusText);
-      const data = await res.json();
-      console.log("Dados recebidos:", data);
-
-      if (!res.ok) {
-        setError(data?.error || "Ocorreu um erro ao converter o currículo.");
-        setLoading(false);
-        return;
-      }
-
-      if (!data.resume) {
-        setError("Resposta inválida do servidor.");
-        setLoading(false);
-        return;
-      }
-
-      const resume: UsResume = data.resume;
-      setResume(resume);
-      router.push("/preview");
-    } catch (err) {
-      console.error("Erro ao converter:", err);
-      setError("Ocorreu um erro ao conectar com o servidor. Verifique o console para mais detalhes.");
-    } finally {
-      setLoading(false);
-    }
+    // Converter arquivo para base64 e salvar no sessionStorage
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      sessionStorage.setItem("pendingFile", base64String);
+      sessionStorage.setItem("pendingFileName", file!.name);
+      sessionStorage.setItem("pendingFileType", file!.type);
+      
+      // Redirecionar para página de loading
+      router.push("/loading");
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
