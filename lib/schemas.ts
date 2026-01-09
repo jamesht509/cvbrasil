@@ -12,27 +12,28 @@ export const BrazilResumeExtractedSchema = z.object({
     portfolio: z.string().optional(),
     outrosDadosBrutos: z.string().optional()
   }),
-  resumoProfissional: z.string().optional(),
-  competencias: z.array(z.string()).optional(),
+  resumoProfissional: z.string().optional().default(""),
+  competencias: z.array(z.string()).optional().default([]),
   experiencias: z
     .array(
       z.object({
-        empresa: z.string(),
-        cargo: z.string(),
+        empresa: z.string().optional().default(""),
+        cargo: z.string().optional().default(""),
         cidade: z.string().optional(),
         estado: z.string().optional(),
         tipoContrato: z.string().optional(), // CLT, PJ, MEI, etc.
         inicio: z.string().optional(),
         fim: z.string().optional(),
-        responsabilidades: z.array(z.string()).optional(),
-        resultados: z.array(z.string()).optional()
+        responsabilidades: z.array(z.string()).optional().default([]),
+        resultados: z.array(z.string()).optional().default([])
       })
     )
-    .optional(),
+    .optional()
+    .default([]),
   formacao: z
     .array(
       z.object({
-        instituicao: z.string(),
+        instituicao: z.string().optional().default(""),
         cidade: z.string().optional(),
         estado: z.string().optional(),
         nivel: z.string().optional(), // Ensino Médio, Tecnólogo, Graduação, Pós, etc.
@@ -40,19 +41,21 @@ export const BrazilResumeExtractedSchema = z.object({
         conclusao: z.string().optional()
       })
     )
-    .optional(),
-  certificacoes: z.array(z.string()).optional(),
+    .optional()
+    .default([]),
+  certificacoes: z.array(z.string()).optional().default([]),
   projetos: z
     .array(
       z.object({
-        nome: z.string().optional(),
-        descricao: z.string().optional(),
-        tecnologias: z.array(z.string()).optional()
+        nome: z.string().optional().default(""),
+        descricao: z.string().optional().default(""),
+        tecnologias: z.array(z.string()).optional().default([])
       })
     )
-    .optional(),
-  idiomas: z.array(z.string()).optional(),
-  informacoesAdicionais: z.string().optional()
+    .optional()
+    .default([]),
+  idiomas: z.array(z.string()).optional().default([]),
+  informacoesAdicionais: z.string().optional().default("")
 });
 
 export type BrazilResumeExtracted = z.infer<typeof BrazilResumeExtractedSchema>;

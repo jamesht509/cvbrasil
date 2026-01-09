@@ -8,3 +8,6 @@ pnpm-debug.log*
 dist
 
 
+.env.local
+.env*.local
+tsconfig.tsbuildinfo

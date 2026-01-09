@@ -10,22 +10,42 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
   return (
     <div className="space-y-6 text-sm">
       {/* Header */}
-      <div className="space-y-2 border-b pb-4">
-        <h2 className="text-xl font-bold">{resume.contact.fullName}</h2>
+      <div className="space-y-3 border-b-2 border-primary pb-4">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          {resume.contact.fullName}
+        </h2>
         {resume.contact.headline && (
-          <p className="text-muted-foreground">{resume.contact.headline}</p>
+          <p className="text-slate-600 dark:text-slate-300 font-medium">
+            {resume.contact.headline}
+          </p>
         )}
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          {resume.contact.location && <span>{resume.contact.location}</span>}
-          {resume.contact.phone && <span>{resume.contact.phone}</span>}
-          {resume.contact.email && <span>{resume.contact.email}</span>}
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+          {resume.contact.location && (
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">location_on</span>
+              {resume.contact.location}
+            </span>
+          )}
+          {resume.contact.phone && (
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">phone</span>
+              {resume.contact.phone}
+            </span>
+          )}
+          {resume.contact.email && (
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">email</span>
+              {resume.contact.email}
+            </span>
+          )}
           {resume.contact.linkedin && (
             <a
               href={resume.contact.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="flex items-center gap-1 text-primary hover:underline"
             >
+              <span className="material-symbols-outlined text-sm">link</span>
               LinkedIn
             </a>
           )}
@@ -34,8 +54,9 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
               href={resume.contact.portfolio}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="flex items-center gap-1 text-primary hover:underline"
             >
+              <span className="material-symbols-outlined text-sm">language</span>
               Portfolio
             </a>
           )}
@@ -45,22 +66,24 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
       {/* Professional Summary */}
       {resume.summary && (
         <div className="space-y-2">
-          <h3 className="font-semibold uppercase text-xs tracking-wide">
+          <h3 className="font-bold uppercase text-sm tracking-wide text-primary border-b border-slate-200 dark:border-slate-700 pb-1">
             Professional Summary
           </h3>
-          <p className="text-muted-foreground leading-relaxed">{resume.summary}</p>
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{resume.summary}</p>
         </div>
       )}
 
       {/* Skills */}
       {resume.skills && resume.skills.length > 0 && (
         <div className="space-y-2">
-          <h3 className="font-semibold uppercase text-xs tracking-wide">Skills</h3>
+          <h3 className="font-bold uppercase text-sm tracking-wide text-primary border-b border-slate-200 dark:border-slate-700 pb-1">
+            Skills
+          </h3>
           <div className="flex flex-wrap gap-2">
             {resume.skills.map((skill, idx) => (
               <span
                 key={idx}
-                className="px-2 py-1 bg-muted rounded text-xs"
+                className="px-3 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium"
               >
                 {skill}
               </span>
@@ -72,22 +95,22 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
       {/* Professional Experience */}
       {resume.experience && resume.experience.length > 0 && (
         <div className="space-y-4">
-          <h3 className="font-semibold uppercase text-xs tracking-wide">
+          <h3 className="font-bold uppercase text-sm tracking-wide text-primary border-b border-slate-200 dark:border-slate-700 pb-1">
             Professional Experience
           </h3>
           {resume.experience.map((exp, idx) => (
             <div key={idx} className="space-y-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-semibold">{exp.title}</p>
-                  <p className="text-muted-foreground text-xs">{exp.company}</p>
-                  <p className="text-muted-foreground text-xs">{exp.location}</p>
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
+                  <p className="font-bold text-slate-900 dark:text-white">{exp.title}</p>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">{exp.company}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">{exp.location}</p>
                 </div>
-                <p className="text-xs text-muted-foreground whitespace-nowrap">
+                <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap font-medium">
                   {exp.startDate} - {exp.endDate}
                 </p>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-2">
+              <ul className="list-disc list-inside space-y-1 text-xs text-slate-600 dark:text-slate-300 ml-2">
                 {exp.bullets.map((bullet, bulletIdx) => (
                   <li key={bulletIdx}>{bullet}</li>
                 ))}
@@ -100,20 +123,22 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
       {/* Education */}
       {resume.education && resume.education.length > 0 && (
         <div className="space-y-4">
-          <h3 className="font-semibold uppercase text-xs tracking-wide">Education</h3>
+          <h3 className="font-bold uppercase text-sm tracking-wide text-primary border-b border-slate-200 dark:border-slate-700 pb-1">
+            Education
+          </h3>
           {resume.education.map((edu, idx) => (
             <div key={idx} className="space-y-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-semibold">{edu.school}</p>
-                  <p className="text-muted-foreground text-xs">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
+                  <p className="font-bold text-slate-900 dark:text-white">{edu.school}</p>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     {edu.degree}
                     {edu.field && `, ${edu.field}`}
                   </p>
-                  <p className="text-muted-foreground text-xs">{edu.location}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">{edu.location}</p>
                 </div>
                 {edu.endDate && (
-                  <p className="text-xs text-muted-foreground">{edu.endDate}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{edu.endDate}</p>
                 )}
               </div>
             </div>

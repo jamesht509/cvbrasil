@@ -5,7 +5,8 @@ import { z } from "zod";
 function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY environment variable is not set");
+    console.error("OPENAI_API_KEY não configurada!");
+    throw new Error("OPENAI_API_KEY environment variable is not set. Please configure your OpenAI API key.");
   }
   return new OpenAI({
     apiKey
@@ -63,19 +64,33 @@ export async function callOpenAIJson<T>(
       const parsed = JSON.parse(jsonText);
       const validated = schema.parse(parsed);
       return validated;
-    } catch (error) {
+    } catch (error: any) {
       attempts++;
+      console.error(`Tentativa ${attempts} falhou:`, error);
+      
       if (attempts >= maxAttempts) {
         console.error("OpenAI JSON parsing failed after retries:", error);
-        throw new Error(
-          "Failed to get valid JSON response from AI. Please try again."
-        );
+        
+        // Mensagem de erro mais detalhada
+        let errorMessage = "Failed to get valid JSON response from AI.";
+        if (error?.issues) {
+          // Erro de validação Zod
+          errorMessage = `Erro de validação: ${error.issues.map((i: any) => i.path.join(".") + " - " + i.message).join(", ")}`;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
       }
+      
       // Retry with corrective prompt - add error context to messages
+      const errorHint = error?.issues 
+        ? `Erro de validação: ${error.issues[0]?.path?.join(".")} - ${error.issues[0]?.message}.`
+        : "O JSON retornado não é válido.";
+        
       messages.push({
         role: "user",
-        content:
-          "The previous response was not valid JSON. Please respond again with ONLY valid JSON, no markdown, no code blocks, no commentary."
+        content: `${errorHint} Por favor, responda novamente com APENAS JSON válido, sem markdown, sem blocos de código, sem comentários.`
       });
     }
   }
@@ -91,13 +106,25 @@ export async function extractBrazilianResumeData(
 ): Promise<z.infer<typeof import("./schemas").BrazilResumeExtractedSchema>> {
   const { BrazilResumeExtractedSchema } = await import("./schemas");
 
+  // Clean and normalize text
+  const cleanedText = rawText
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .replace(/\n{3,}/g, "\n\n") // Normalize multiple newlines
+    .trim();
+
+  if (cleanedText.length < 200) {
+    throw new Error("Texto muito curto para processar. O PDF precisa conter mais conteúdo.");
+  }
+
   const prompt = `Extract structured resume data from the following Portuguese resume text. 
 Be robust to messy formatting, missing sections, and various layouts.
+If a field is not found, use empty string or empty array as appropriate.
+Do your best to extract all available information.
 
 Return a JSON object with this structure:
 {
   "dadosPessoais": {
-    "nome": "Full name",
+    "nome": "Full name (required)",
     "cidade": "City",
     "estado": "State (e.g., SP, RJ)",
     "telefone": "Phone number",
@@ -106,8 +133,8 @@ Return a JSON object with this structure:
     "portfolio": "Portfolio URL if present",
     "outrosDadosBrutos": "Any other personal info found"
   },
-  "resumoProfissional": "Professional summary text",
-  "competencias": ["skill1", "skill2", ...],
+  "resumoProfissional": "Professional summary text (can be empty if not found)",
+  "competencias": ["skill1", "skill2", ...] (can be empty array),
   "experiencias": [
     {
       "empresa": "Company name",
@@ -120,7 +147,7 @@ Return a JSON object with this structure:
       "responsabilidades": ["responsibility 1", ...],
       "resultados": ["achievement 1", ...] (optional)
     }
-  ],
+  ] (can be empty array),
   "formacao": [
     {
       "instituicao": "School/University name",
@@ -130,25 +157,61 @@ Return a JSON object with this structure:
       "curso": "Course/Field name",
       "conclusao": "Completion date"
     }
-  ],
-  "certificacoes": ["certification 1", ...],
+  ] (can be empty array),
+  "certificacoes": ["certification 1", ...] (can be empty array),
   "projetos": [
     {
       "nome": "Project name",
       "descricao": "Description",
       "tecnologias": ["tech1", ...]
     }
-  ] (optional),
-  "idiomas": ["Language: Level", ...] (optional),
+  ] (optional, can be empty array),
+  "idiomas": ["Language: Level", ...] (optional, can be empty array),
   "informacoesAdicionais": "Any other relevant info" (optional)
 }
 
-Resume text:
-${rawText.substring(0, 15000)}${rawText.length > 15000 ? "\n\n[... truncated ...]" : ""}
+IMPORTANT: Always return valid JSON. If a section is missing, use empty values (empty string "", empty array [], or empty object {}).
+The "nome" field in dadosPessoais is required - try to extract it even if it's not clearly labeled.
 
-Respond ONLY with valid JSON. No markdown. No commentary.`;
+Resume text (${cleanedText.length} characters):
+${cleanedText.substring(0, 15000)}${cleanedText.length > 15000 ? "\n\n[... truncated ...]" : ""}
 
-  return callOpenAIJson(prompt, BrazilResumeExtractedSchema);
+Respond ONLY with valid JSON. No markdown code blocks. No commentary. Just pure JSON.`;
+
+  try {
+    return await callOpenAIJson(prompt, BrazilResumeExtractedSchema);
+  } catch (error: any) {
+    console.error("Error in extractBrazilianResumeData:", error);
+    
+    // Se for erro de validação do schema, tentar novamente com prompt mais simples
+    if (error?.message?.includes("schema") || error?.message?.includes("validation")) {
+      console.log("Tentando novamente com prompt simplificado...");
+      const simplifiedPrompt = `Extract the most important information from this Portuguese resume text.
+
+Return JSON with at minimum:
+{
+  "dadosPessoais": {
+    "nome": "Name found in the text"
+  },
+  "experiencias": [],
+  "formacao": [],
+  "competencias": [],
+  "resumoProfissional": ""
+}
+
+Text: ${cleanedText.substring(0, 8000)}
+
+Return ONLY valid JSON, no markdown.`;
+      
+      try {
+        return await callOpenAIJson(simplifiedPrompt, BrazilResumeExtractedSchema);
+      } catch (retryError) {
+        throw new Error(`Failed to extract resume data: ${error.message}. Original error: ${retryError}`);
+      }
+    }
+    
+    throw error;
+  }
 }
 
 /**

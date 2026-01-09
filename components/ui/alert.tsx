@@ -9,11 +9,11 @@ export function Alert({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { variant?: "default" | "destructive" }) {
   const base =
-    "relative w-full rounded-md border px-4 py-3 text-sm flex gap-2 items-start";
+    "relative w-full rounded-lg border-2 px-4 py-3 text-sm flex gap-3 items-start";
   const variants: Record<string, string> = {
-    default: "bg-muted text-foreground border-border",
+    default: "bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white border-slate-200 dark:border-slate-800",
     destructive:
-      "border-destructive/70 text-destructive-foreground bg-destructive/10"
+      "border-red-300 dark:border-red-900 text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20"
   };
   return (
     <div className={cn(base, variants[variant], className)} role="alert" {...props} />
@@ -26,7 +26,7 @@ export function AlertTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("font-semibold leading-none tracking-tight", className)}
+      className={cn("font-bold leading-none tracking-tight", className)}
       {...props}
     />
   );
@@ -37,7 +37,7 @@ export function AlertDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <p className={cn("text-sm mt-1", className)} {...props} />
   );
 }
 
