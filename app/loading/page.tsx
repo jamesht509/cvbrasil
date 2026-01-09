@@ -34,15 +34,36 @@ export default function LoadingPage() {
       return;
     }
 
+    // Iniciar barra de progresso falsa (animação suave)
+    let fakeProgress = 0;
+    const targetProgress = 95; // Vai até 95%, os últimos 5% quando realmente terminar
+    const duration = 45000; // 45 segundos para chegar a 95%
+    const interval = 100; // Atualizar a cada 100ms
+    const increment = (targetProgress / duration) * interval;
+
+    const fakeProgressInterval = setInterval(() => {
+      fakeProgress += increment;
+      if (fakeProgress < targetProgress) {
+        setProgress((prev) => Math.max(prev, Math.min(fakeProgress, targetProgress)));
+      } else {
+        clearInterval(fakeProgressInterval);
+      }
+    }, interval);
+
     // Iniciar conversão
     startConversion(pendingFile, fileName);
+
+    // Limpar intervalo quando componente desmontar
+    return () => clearInterval(fakeProgressInterval);
   }, []);
 
   async function startConversion(base64String: string, fileName: string) {
     try {
       // Step 1: Lendo PDF
       updateStep(0, "active", "Processando...");
-      setProgress(10);
+      
+      // Aguardar um pouco para mostrar o step ativo
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Converter base64 para File
       const response = await fetch(base64String);
@@ -51,22 +72,19 @@ export default function LoadingPage() {
 
       // Step 1: Completo
       updateStep(0, "completed", "Concluído");
-      setProgress(25);
 
       // Step 2: Estruturando informações
       updateStep(1, "active", "Processando...");
-      setProgress(40);
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const formData = new FormData();
       formData.append("file", file);
 
       // Step 2: Completo
       updateStep(1, "completed", "Concluído");
-      setProgress(50);
 
       // Step 3: Convertendo para padrão EUA
       updateStep(2, "active", "Processando...");
-      setProgress(60);
 
       const res = await fetch("/api/convert", {
         method: "POST",
@@ -102,17 +120,18 @@ export default function LoadingPage() {
 
       // Step 3: Completo
       updateStep(2, "completed", "Concluído");
-      setProgress(80);
 
       // Step 4: Gerando layout
       updateStep(3, "active", "Processando...");
-      setProgress(90);
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const resume: UsResume = data.resume;
       setResume(resume);
 
       // Step 4: Completo
       updateStep(3, "completed", "Concluído");
+      
+      // Completar progresso até 100% (os últimos 5%)
       setProgress(100);
 
       // Limpar sessionStorage
@@ -123,7 +142,7 @@ export default function LoadingPage() {
       // Aguardar um pouco para mostrar o progresso completo
       setTimeout(() => {
         router.push("/preview");
-      }, 500);
+      }, 800);
     } catch (err) {
       console.error("Erro ao converter:", err);
       sessionStorage.removeItem("pendingFile");
