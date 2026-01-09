@@ -246,7 +246,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
     <Document>
       <Page size={TOKENS.page.size} style={styles.page}>
         {/* Premium accent line at top */}
-        {isPremium && <View style={styles.accentLine} />}
+        {isPremium && <View style={premiumStyles.accentLine} />}
 
         {/* Header */}
         <View style={styles.header}>
@@ -259,7 +259,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section} wrap={false}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>SUMMARY</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             <Text style={styles.summary}>{resume.summary}</Text>
           </View>
@@ -270,7 +270,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section} wrap={false}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>SKILLS</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             <View style={styles.skillsList}>
               {resume.skills.map((skill, idx) => (
@@ -288,7 +288,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>EXPERIENCE</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             {resume.experience.map((exp, idx) => (
               <View key={idx} style={styles.experienceItemContainer} wrap={false}>
@@ -323,7 +323,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>EDUCATION</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             {resume.education.map((edu, idx) => (
               <View key={idx} style={styles.educationItem}>
@@ -350,7 +350,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>CERTIFICATIONS</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             {resume.certifications.map((cert, idx) => (
               <Text key={idx} style={styles.certification}>
@@ -365,7 +365,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>PROJECTS</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             {resume.projects.map((project, idx) => (
               <View key={idx} style={styles.projectItem}>
@@ -390,7 +390,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>LANGUAGES</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             {resume.languages.map((lang, idx) => (
               <Text key={idx} style={styles.language}>
@@ -405,7 +405,7 @@ export function ResumePdfDocument({ resume, style }: ResumePdfDocumentProps) {
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>ADDITIONAL INFORMATION</Text>
-              {isPremium && <View style={styles.sectionTitleUnderline} />}
+              {isPremium && <View style={premiumStyles.sectionTitleUnderline} />}
             </View>
             <Text style={styles.additional}>{resume.additional}</Text>
           </View>
