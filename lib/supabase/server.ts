@@ -27,17 +27,3 @@ export function createServerClient() {
     }
   );
 }
-
-// Server-side client with service role for admin operations
-export function createAdminClient() {
-  return createServerClientSSR(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-}

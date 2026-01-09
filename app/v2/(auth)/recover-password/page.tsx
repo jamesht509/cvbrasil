@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { resetPasswordAction } from "../recover-password/actions";
+import { resetPasswordAction } from "../../recover-password/actions";
 
 export default function RecoverPasswordPage() {
   const [isPending, setIsPending] = useState(false);

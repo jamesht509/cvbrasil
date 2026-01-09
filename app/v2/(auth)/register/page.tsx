@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signupAction } from "../register/actions";
+import { signupAction } from "../../register/actions";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -78,11 +78,6 @@ export default function RegisterPage() {
             <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
           </div>
           {/* Registration Form Fields */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
-            </div>
-          )}
           <form className="space-y-5" action={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">

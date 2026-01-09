@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { loginAction } from "../login/actions";
+import { loginAction } from "../../login/actions";
 import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const searchParams = useSearchParams();
@@ -85,11 +85,6 @@ export default function LoginPage() {
             <div className="flex-grow border-t border-white/10"></div>
           </div>
           {/* Email/Password Form */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
-            </div>
-          )}
           <form className="space-y-5" action={handleSubmit}>
             <div>
               <label className="block text-slate-300 text-sm font-medium mb-1.5 ml-1" htmlFor="email">
@@ -178,5 +173,22 @@ export default function LoginPage() {
         <p className="text-slate-500 text-xs">© 2024 ResumeUSA. Todos os direitos reservados.</p>
       </footer>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full max-w-[480px] z-10">
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-xl p-8 shadow-2xl">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-slate-400">Carregando...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

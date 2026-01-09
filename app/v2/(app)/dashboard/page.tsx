@@ -3,18 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/app/v2/providers";
 import { useEffect, useState } from "react";
-import { getUserResumes } from "@/lib/services/resumes";
-import { getUserMoveGuides } from "@/lib/services/moveGuides";
-import { getUserLinkedInBoosts } from "@/lib/services/linkedinBoost";
-import { getUserApplicationKits } from "@/lib/services/applicationKits";
-
-interface DashboardStats {
-  resumes: number;
-  moveGuides: number;
-  linkedinBoosts: number;
-  applicationKits: number;
-  completedResumes: number;
-}
+import { getDashboardStats, type DashboardStats } from "./actions";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -32,20 +21,8 @@ export default function DashboardPage() {
       if (!user) return;
 
       try {
-        const [resumesResult, moveGuidesResult, linkedinResult, kitsResult] = await Promise.all([
-          getUserResumes(user.id),
-          getUserMoveGuides(user.id),
-          getUserLinkedInBoosts(user.id),
-          getUserApplicationKits(user.id)
-        ]);
-
-        setStats({
-          resumes: resumesResult.resumes?.length || 0,
-          moveGuides: moveGuidesResult.moveGuides?.length || 0,
-          linkedinBoosts: linkedinResult.linkedinBoosts?.length || 0,
-          applicationKits: kitsResult.applicationKits?.length || 0,
-          completedResumes: resumesResult.resumes?.filter(r => r.status === 'completed').length || 0
-        });
+        const dashboardStats = await getDashboardStats();
+        setStats(dashboardStats);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
